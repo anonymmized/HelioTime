@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <string.h>
+#include <time.h>
 #include <stdlib.h>
 #ifdef _WIN32
 #include <windows.h>
@@ -10,7 +11,64 @@
 
 #define MAXLINE 256
 
-char home_path[MAXLINE];
+char hom_path[MAXLINE];
+
+// ===MAIN===
+
+double lat = 0.0, lon = 0.0;
+int tz_offset_mins = 0;
+int day_num = 0;
+
+// === === ===
+
+int get_path(char *buf, size_t size);
+void usage(void);
+int ensure_config_dir(const char *path);
+int get_config_path(char *buf, size_t size);
+int is_leap(int year);
+int get_day(int year, int month, int day);
+int get_timezone_offset_minutes(void);
+
+int get_timezone_offset_minutes(void) {
+    time_t now = time(NULL);
+
+    struct tm local_tm;
+    struct tm utc_tm;
+
+#ifdef _WIN32
+    localtime_s(&local_tm, &now);
+    gmtime_s(&utc_tm, &now);
+#else 
+    localtim_r(&now, &local_tm);
+    gmtime_r(&now, &utc_tm);
+#endif
+    time_t local_time = mktime(&local_tm);
+    time_t utc_time = mktime(&utc_tm);
+    return (int)difftime(local_time, utc_time) / 60;
+}
+
+int is_leap(int year) {
+    if ((year % 4 == 0 && year % 100 != 0) || (year % 400 == 0)) {
+        return 1;
+    } else {
+        return 0;
+    }
+}
+
+int get_day(int year, int month, int day) {
+    int res = 0;
+    for (int i = 1; i < month; i++) {
+        if (i == 2) {
+            res += (is_leap(year)) ? 29 : 28;
+        } else if (i == 4 || i == 6 || i == 9 || i == 11) {
+            res += 30;
+        } else {
+            res += 31;
+        }
+    }
+    return res + day;
+}
+
 
 int get_path(char *buf, size_t size) {
 #ifdef _WIN32
@@ -85,7 +143,7 @@ int get_config_path(char *buf, size_t size) {
 }
 
 int main(int argc, char *argv[]) {
-    double lat = 0.0, lon = 0.0;
+    
     FILE *fp = NULL;
     char line[MAXLINE];
     if (get_path(home_path, MAXLINE) != 0) {
