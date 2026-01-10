@@ -11,7 +11,7 @@
 
 #define MAXLINE 256
 
-char hom_path[MAXLINE];
+char home_path[MAXLINE];
 
 // ===MAIN===
 
@@ -39,7 +39,7 @@ int get_timezone_offset_minutes(void) {
     localtime_s(&local_tm, &now);
     gmtime_s(&utc_tm, &now);
 #else 
-    localtim_r(&now, &local_tm);
+    localtime_r(&now, &local_tm);
     gmtime_r(&now, &utc_tm);
 #endif
     time_t local_time = mktime(&local_tm);
@@ -116,26 +116,40 @@ int ensure_config_dir(const char *path) {
 
 int get_config_path(char *buf, size_t size) {
 #ifdef _WIN32
+    char dir[MAXLINE];
     const char *appdata = getenv("APPDATA");
     if (!appdata) {
         fprintf(stderr, "APPDATA not set\n");
         return 1;
     }
-    if (snprintf(buf, size, "%s\\sunweek\\config", appdata) >= (int)size) {
-        fprintf(stderr, "Path too long\n");
+    if (snprintf(dir, sizeof(dir), "%s\\sunweek", appdata) >= (int)sizeof(dir)) {
+        fprintf(stderr, "Path to dir too long\n");
         return 1;
     }
-    if (ensure_config_dir(buf) != 0) {
+
+    if (ensure_config_dir(dir) != 0) {
         fprintf(stderr, "Cannot find path\n");
+        return 1;
+    }
+
+    if (snprintf(buf, size, "%s\\config", dir) >= (int)size) {
+        fprintf(stderr, "Path too long\n");
         return 1;
     }
 #else 
-    if (snprintf(buf, size, "%s/.config/sunweek/config", home_path) >= (int)size) {
-        fprintf(stderr, "Path too long\n");
+    char dir[MAXLINE];
+    if (snprintf(dir, sizeof(dir), "%s/.config/sunweek", home_path) >= (int)sizeof(dir)) {
+        fprintf(stderr, "Path to dir too long\n");
         return 1;
     }
-    if (ensure_config_dir(buf) != 0) {
+
+    if (ensure_config_dir(dir) != 0) {
         fprintf(stderr, "Cannot find path\n");
+        return 1;
+    }
+
+    if (snprintf(buf, size, "%s/config", dir) >= (int)size) {
+        fprintf(stderr, "Path too long\n");
         return 1;
     }
 #endif
@@ -171,7 +185,7 @@ int main(int argc, char *argv[]) {
                 if (eq) lon = atof(eq + 1);
             }
         }
-        printf("lat: %.3f\nlon: %.3f", lat, lon);
+        // printf("lat: %.3f\nlon: %.3f\n", lat, lon);
         fclose(fp);
     } else if (argc == 6 && strcmp(argv[1], "--setloc") == 0) {
         if ((strcmp(argv[2], "--lat") == 0) && (strcmp(argv[4], "--lon") == 0)) {
@@ -209,7 +223,20 @@ int main(int argc, char *argv[]) {
         fprintf(fp, "lat = %s\n", lat_buf);
         fprintf(fp, "lon = %s\n", lon_buf);
         fclose(fp);
-    
     }
+    time_t noww = time(NULL);
+    struct tm *t = localtime(&noww);
+    int year = t->tm_year + 1900;
+    int month = t->tm_mon + 1;
+    int day = t->tm_mday;
+
+    day_num = get_day(year, month, day);
+    tz_offset_mins = get_timezone_offset_minutes();
+
+    printf("All main vars were found:\n");
+    printf("Day number: %d\n", day_num);
+    printf("Lat: %.2f\tLon: %.2f\n", lat, lon);
+    printf("TZ: %d (per hour)\n", tz_offset_mins / 60);
+
     return 0;
 }
