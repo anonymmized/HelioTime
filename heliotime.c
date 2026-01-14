@@ -56,6 +56,32 @@ int is_leap(int year) {
     }
 }
 
+int get_month_days(int year, int month) {
+    if (month == 2) return is_leap(year) ? 29 : 28;
+    if (month == 4 || month == 6 || month == 9 || month == 11) return 30;
+    return 31;
+}
+
+int* get_date(int year, int day_of_year) {
+    int max = is_leap(year) ? 366 : 365;
+    if (day_of_year < 1 || day_of_year > max) return NULL;
+    int *res = malloc(sizeof(int) * 3);
+    if (!res) return NULL;
+
+    int month = 1;
+    int day = day_of_year;
+    while (month <= 12) {
+        int dim = get_month_days(year, month);
+        if (day <= dim) break;
+        day -= dim;
+        month += 1;
+    }
+    res[0] = day;
+    res[1] = month;
+    res[2] = year;
+    return res;
+}
+
 int get_day(int year, int month, int day) {
     int res = 0;
     for (int i = 1; i < month; i++) {
@@ -231,11 +257,15 @@ int main(int argc, char *argv[]) {
     int year = t->tm_year + 1900;
     int month = t->tm_mon + 1;
     int day = t->tm_mday;
-
-    day_num = get_day(year, month, day);
     tz_offset_mins = get_timezone_offset_minutes();
-    int *times = get_sunrise_sunset(day_num, lat, lon, tz_offset_mins / 60);
-    printf("For %02d.%02d.%04d (Time zone: %d) Sunrise: %02d:%02d\tSunset: %02d:%02d\n", day, month, year, tz_offset_mins / 60, times[0], times[1], times[2], times[3]);
-    free(times);
+    printf("=== SUN REPORT FOR NEXT 7 DAYS ===\n");
+    for (int i = 0; i < 7; i++) {
+        day += 1;
+        int *date = get_date(year, day);
+        int day_num = get_day(year, month, day);
+        int *times = get_sunrise_sunset(day_num, lat, lon, tz_offset_mins / 60);
+        printf("For %02d.%02d.%04d (Time zone: %d) Sunrise: %02d:%02d\tSunset: %02d:%02d\n", day, month, year, tz_offset_mins / 60, times[0], times[1], times[2], times[3]);
+        free(times);
+    } 
     return 0;
 }
