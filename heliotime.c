@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
+#include "calculations.h"
 #include <stdlib.h>
 #ifdef _WIN32
 #include <windows.h>
@@ -187,7 +188,6 @@ int main(int argc, char *argv[]) {
                 if (eq) lon = atof(eq + 1);
             }
         }
-        // printf("lat: %.3f\nlon: %.3f\n", lat, lon);
         fclose(fp);
     } else if (argc == 6 && strcmp(argv[1], "--setloc") == 0) {
         if ((strcmp(argv[2], "--lat") == 0) && (strcmp(argv[4], "--lon") == 0)) {
@@ -234,11 +234,8 @@ int main(int argc, char *argv[]) {
 
     day_num = get_day(year, month, day);
     tz_offset_mins = get_timezone_offset_minutes();
-
-    printf("All main vars were found:\n");
-    printf("Day number: %d\n", day_num);
-    printf("Lat: %.2f\tLon: %.2f\n", lat, lon);
-    printf("TZ: %d (per hour)\n", tz_offset_mins / 60);
-
+    int *times = get_sunrise_sunset(day_num, lat, lon, tz_offset_mins / 60);
+    printf("For %02d.%02d.%04d (Time zone: %d) Sunrise: %02d:%02d\tSunset: %02d:%02d\n", day, month, year, tz_offset_mins / 60, times[0], times[1], times[2], times[3]);
+    free(times);
     return 0;
 }
