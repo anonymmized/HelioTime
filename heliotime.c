@@ -11,6 +11,11 @@
 #include <errno.h>
 
 #define MAXLINE 256
+#define COLOR_RESET "\x1b[0m"
+#define COLOR_RED "\x1b[31m"
+#define COLOR_MAGENTA "\x1b[35m"
+#define COLOR_GRAY  "\033[90m"
+#define ESC "\x1b"
 
 char home_path[MAXLINE];
 const char *names[] = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
@@ -33,6 +38,42 @@ int get_timezone_offset_minutes(void);
 int get_month_days(int year, int month);
 int* get_date(int year, int month);
 int get_weekday(int year, int day_num);
+static void repeat(const char *s, int n);
+static void box_print(int width, char *lines[], int nlines);
+
+static void repeat(const char *s, int n) {
+    for (int i = 0; i < n; i++) fputs(s, stdout);
+}
+
+static void box_print(int width, char *lines[], int nlines) {
+    int inner = width - 2;
+
+    printf("┌"); 
+    repeat("─", inner); 
+    printf("┐\n");
+
+    char hdr[256];
+    snprintf(hdr, sizeof(hdr), " %s ", lines[0]);
+
+    int pad = inner - (int)strlen(hdr);
+    if (pad < 0) pad = 0;
+    int left = pad / 2;
+    int right = pad - left;
+
+    printf("│");
+    repeat(" ", left);
+    printf(ESC "[1m%s" ESC "[0m", hdr);
+    repeat(" ", right);
+    printf("│\n");
+
+    printf("├"); repeat("─", inner); printf("┤\n");
+
+    for (int i = 1; i < nlines; i++) {
+        printf("│ %-*.*s │\n", inner - 2, inner - 2, lines[i]);
+    }
+
+    printf("└"); repeat("─", inner); printf("┘\n");
+}
 
 int get_weekday(int year, int day_num) {
     struct tm t = {0};
@@ -269,6 +310,7 @@ int main(int argc, char *argv[]) {
     }
     time_t noww = time(NULL);
     struct tm *t = localtime(&noww);
+
     int year = t->tm_year + 1900;
     int month = t->tm_mon + 1;
     int day = t->tm_mday;
@@ -276,21 +318,39 @@ int main(int argc, char *argv[]) {
     int w_conf = get_weekday(year, day_num_conf);
     int first_w_day = (w_conf+6) % 7;
     tz_offset_mins = get_timezone_offset_minutes();
-    printf("=== SUN REPORT FOR THIS WEEK ===\n");
+
+    char *lines[10];
+    char buf[10][256];
+
+    snprintf(buf[0], sizeof(buf[0]), "SUN REPORT (THIS WEEK)");
+    lines[0] = buf[0];
+
+    snprintf(buf[1], sizeof(buf[1]), "Day   Date        Sunrise   Sunset");
+    lines[1] = buf[1];
+
+    snprintf(buf[2], sizeof(buf[2]), "----  ----------  -------   ------");
+    lines[2] = buf[2];
+
     for (int i = 0; i < 7; i++) {
         int day_num = get_day(year, month, day - first_w_day + i);
         int *date = get_date(year, day_num);
         int w = get_weekday(year, day_num);
         int *times = get_sunrise_sunset(day_num, lat, lon, tz_offset_mins / 60);
+
         if (w == w_conf) {
-            printf("\033[1;3mFor %s - %02d.%02d.%04d (Time zone: %d) Sunrise: %02d:%02d\tSunset: %02d:%02d\033[0m\n", names[w], date[0], date[1], date[2], tz_offset_mins / 60, times[0], times[1], times[2], times[3]);
-            free(date);
-            free(times);
-            continue;
+            snprintf(buf[3 + i], sizeof(buf[3 + i]), "%-4s  %02d.%02d.%04d   %02d:%02d    %02d:%02d  < Current",
+                    names[w], date[0], date[1], date[2], times[0], times[1], times[2], times[3]);
+        } else {
+            snprintf(buf[3 + i], sizeof(buf[3 + i]), "%-4s  %02d.%02d.%04d   %02d:%02d    %02d:%02d", 
+                    names[w], date[0], date[1], date[2], times[0], times[1], times[2], times[3]);
         }
-        printf("For %s - %02d.%02d.%04d (Time zone: %d) Sunrise: %02d:%02d\tSunset: %02d:%02d\n", names[w], date[0], date[1], date[2], tz_offset_mins / 60, times[0], times[1], times[2], times[3]);
+        lines[3 + i] = buf[3 + i];
+
         free(date);
         free(times);
-    } 
+    }
+
+    box_print(54, lines, 10);
+
     return 0;
 }
