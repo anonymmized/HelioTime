@@ -11,34 +11,16 @@ double to_rad(double degree) {
     return (M_PI * degree) / 180;
 }
 
-double calc_h0(int day, double lat) {
-    double lat_rad = to_rad(lat);
-    double gamma = (2.0 * M_PI / 365.0) * (day - 81);
-    double declination = to_rad(23.44) * sin(gamma);
-
-    double cosH0 = -tan(lat_rad) * tan(declination);
-    double h0 = a_cos(cosH0);
-    return h0;
-}
-
-double day_len(double h0) {
-    return (2 * h0) / to_rad(15.0);
-}
-
-double eot_calc(int day) {
-    double B = (360.0 / 365.0) * (day - 81);
-    double Brad = to_rad(B);
-    return 9.87 * sin(2.0 * Brad) - 7.53 * cos(Brad) - 1.5 * sin(Brad);
-}
-
 int* get_sunrise_sunset(int day, double lat, double lon, int tz) {
     int *times = malloc(sizeof(int) * 4);
     // Calculate H0
     double lat_rad = to_rad(lat);
     double gamma = (2.0 * M_PI / 365.0) * (day - 81);
     double declination = to_rad(23.44) * sin(gamma);
-
-    double cosH0 = -tan(lat_rad) * tan(declination);
+    double hh = to_rad(-0.833);
+    double cosH0 = (sin(hh) - sin(lat_rad) * sin(declination)) / (cos(lat_rad) * cos(declination));
+    if (cosH0 > 1.0) cosH0 = 1.0;
+    if (cosH0 < -1.0) cosH0 = -1.0;
     double h0 = a_cos(cosH0);
     // Calculate solar sunset/sunrise
     double day_len = (2 * h0) / to_rad(15.0);
@@ -52,25 +34,6 @@ int* get_sunrise_sunset(int day, double lat, double lon, int tz) {
     double eot = 9.87 * sin(2.0 * Brad) - 7.53 * cos(Brad) - 1.5 * sin(Brad);
     // Calculate sunrise/sunset
     double C = lon_correction - eot;
-    /*
-    double t_sunrise = sunrise_solar + (C / 60.0);
-    int hours1 = (int)t_sunrise;
-    int minutes1 = round((t_sunrise - hours1) * 60) - 10;
-    if (minutes1 == 60) {
-        minutes1 = 0;
-        hours1 += 1;
-    } else if (minutes1 < 0) {
-        minutes1 = 60 + minutes1;
-        hours1 -= 1;
-    }
-    double t_sunset = sunset_solar + (C / 60.0);
-    int hours2 = (int)t_sunset;
-    int minutes2 = round((t_sunset - hours2) * 60) + 10;
-    if (minutes2 >= 60) {
-        minutes2 -= 60;
-        hours2 += 1;
-    }
-    */
     double t_sunrise = sunrise_solar + (C / 60.0);
     double t_sunset = sunset_solar + (C / 60.0);
 
