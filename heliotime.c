@@ -13,6 +13,7 @@
 #define MAXLINE 256
 
 char home_path[MAXLINE];
+const char *names[] = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
 
 // ===MAIN===
 
@@ -29,6 +30,20 @@ int get_config_path(char *buf, size_t size);
 int is_leap(int year);
 int get_day(int year, int month, int day);
 int get_timezone_offset_minutes(void);
+int get_month_days(int year, int month);
+int* get_date(int year, int month);
+int get_weekday(int year, int day_num);
+
+int get_weekday(int year, int day_num) {
+    struct tm t = {0};
+    t.tm_year = year - 1900;
+    t.tm_mon = 0;
+    t.tm_mday = day_num;
+
+    mktime(&t);
+
+    return t.tm_wday;
+}
 
 int get_timezone_offset_minutes(void) {
     time_t now = time(NULL);
@@ -257,14 +272,24 @@ int main(int argc, char *argv[]) {
     int year = t->tm_year + 1900;
     int month = t->tm_mon + 1;
     int day = t->tm_mday;
+    int day_num_conf = get_day(year, month, day);
+    int w_conf = get_weekday(year, day_num_conf);
+    int first_w_day = (w_conf+6) % 7;
     tz_offset_mins = get_timezone_offset_minutes();
-    printf("=== SUN REPORT FOR NEXT 7 DAYS ===\n");
+    printf("=== SUN REPORT FOR THIS WEEK ===\n");
     for (int i = 0; i < 7; i++) {
-        day += 1;
-        int *date = get_date(year, day);
-        int day_num = get_day(year, month, day);
+        int day_num = get_day(year, month, day - first_w_day + i);
+        int *date = get_date(year, day_num);
+        int w = get_weekday(year, day_num);
         int *times = get_sunrise_sunset(day_num, lat, lon, tz_offset_mins / 60);
-        printf("For %02d.%02d.%04d (Time zone: %d) Sunrise: %02d:%02d\tSunset: %02d:%02d\n", day, month, year, tz_offset_mins / 60, times[0], times[1], times[2], times[3]);
+        if (w == w_conf) {
+            printf("\033[1;3mFor %s - %02d.%02d.%04d (Time zone: %d) Sunrise: %02d:%02d\tSunset: %02d:%02d\033[0m\n", names[w], date[0], date[1], date[2], tz_offset_mins / 60, times[0], times[1], times[2], times[3]);
+            free(date);
+            free(times);
+            continue;
+        }
+        printf("For %s - %02d.%02d.%04d (Time zone: %d) Sunrise: %02d:%02d\tSunset: %02d:%02d\n", names[w], date[0], date[1], date[2], tz_offset_mins / 60, times[0], times[1], times[2], times[3]);
+        free(date);
         free(times);
     } 
     return 0;
