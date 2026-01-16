@@ -95,7 +95,7 @@ static void box_print(int width, char *lines[], int nlines) {
 
     printf("├"); repeat("─", inner); printf("┤\n");
 
-    for (int i = 2; i < nlines; i++) {
+    for (int i = 3; i < nlines; i++) {
         printf("│ %-*.*s │\n", inner - 2, inner - 2, lines[i]);
     }
 
