@@ -53,27 +53,20 @@ static void box_print(int width, char *lines[], int nlines) {
     printf("┐\n");
 
     char hdr[256];
-    char city[256];
     char tz[256];
 
     snprintf(hdr, sizeof(hdr), " %s ", lines[0]);
-    snprintf(city, sizeof(city), " %s ", lines[1]);
-    snprintf(tz, sizeof(tz), " %s ", lines[2]);
+    snprintf(tz, sizeof(tz), " %s ", lines[1]);
 
     int pad1 = inner - (int)strlen(hdr);
     if (pad1 < 0) pad1 = 0;
     int left1 = pad1 / 2;
     int right1 = pad1 - left1;
 
-    int pad2 = inner - (int)strlen(city);
+    int pad2 = inner - (int)strlen(tz);
     if (pad2 < 0) pad2 = 0;
     int left2 = pad2 / 2;
     int right2 = pad2 - left2;
-
-    int pad3 = inner - (int)strlen(tz);
-    if (pad3 < 0) pad3 = 0;
-    int left3 = pad3 / 2;
-    int right3 = pad3 - left3;
 
     printf("│");
     repeat(" ", left1);
@@ -83,20 +76,14 @@ static void box_print(int width, char *lines[], int nlines) {
 
     printf("│");
     repeat(" ", left2);
-    printf(ESC "[1m%s" ESC "[0m", city);
+    printf(ESC "[1m%s" ESC "[0m", tz);
     repeat(" ", right2);
     printf("│\n");
 
-    printf("│");
-    repeat(" ", left3);
-    printf(ESC "[1m%s" ESC "[0m", tz);
-    repeat(" ", right3);
-    printf("│\n");
+    printf("├"); repeat("─", 5); printf("┐"); repeat("─", 13); printf("┐"); repeat("─", 9); printf("┐"); repeat("─", 23); printf("┤\n");
 
-    printf("├"); repeat("─", inner); printf("┤\n");
-
-    for (int i = 3; i < nlines; i++) {
-        printf("│ %-*.*s │\n", inner - 2, inner - 2, lines[i]);
+    for (int i = 2; i < nlines; i++) {
+        printf("│ %-*.*s │\n", inner - 2 + 6, inner - 2 + 6, lines[i]);
     }
 
     printf("└"); repeat("─", inner); printf("┘\n");
@@ -327,7 +314,6 @@ int main(int argc, char *argv[]) {
 
     time_t noww = time(NULL);
     struct tm *t = localtime(&noww);
-    char *city = "New York (Example)";
     int year = t->tm_year + 1900;
     int month = t->tm_mon + 1;
     int day = t->tm_mday;
@@ -343,17 +329,14 @@ int main(int argc, char *argv[]) {
     snprintf(buf[0], sizeof(buf[0]), "SUN REPORT (THIS WEEK)");
     lines[0] = buf[0];
 
-    snprintf(buf[1], sizeof(buf[1]), "%s", city);
+    snprintf(buf[1], sizeof(buf[1]), "Time Zone %d", tz_offset_mins);
     lines[1] = buf[1];
 
-    snprintf(buf[2], sizeof(buf[2]), "Time Zone %d", tz_offset_mins);
+    snprintf(buf[2], sizeof(buf[2]), "Day │ Date        │ Sunrise │ Sunset");
     lines[2] = buf[2];
 
-    snprintf(buf[3], sizeof(buf[3]), "Day   Date        Sunrise   Sunset");
+    snprintf(buf[3], sizeof(buf[3]), "--- │  ---------- │ ------- │ ------");
     lines[3] = buf[3];
-
-    snprintf(buf[4], sizeof(buf[4]), "----  ----------  -------   ------");
-    lines[4] = buf[4];
 
 
     for (int i = 0; i < 7; i++) {
@@ -363,19 +346,19 @@ int main(int argc, char *argv[]) {
         int *times = get_sunrise_sunset(day_num, lat, lon, tz_offset_mins);
 
         if (w == w_conf) {
-            snprintf(buf[5 + i], sizeof(buf[5 + i]), "%-4s  %02d.%02d.%04d   %02d:%02d    %02d:%02d  < Current",
+            snprintf(buf[4 + i], sizeof(buf[4 + i]), "%-3s │ %02d.%02d.%04d  │ %02d:%02d   │ %02d:%02d  < Current",
                     names[w], date[0], date[1], date[2], times[0], times[1], times[2], times[3]);
         } else {
-            snprintf(buf[5 + i], sizeof(buf[5 + i]), "%-4s  %02d.%02d.%04d   %02d:%02d    %02d:%02d", 
+            snprintf(buf[4 + i], sizeof(buf[4 + i]), "%-3s │ %02d.%02d.%04d  │ %02d:%02d   │ %02d:%02d", 
                     names[w], date[0], date[1], date[2], times[0], times[1], times[2], times[3]);
         }
-        lines[5 + i] = buf[5 + i];
+        lines[4 + i] = buf[4 + i];
         
         free(date);
         free(times);
     }
 
-    box_print(49, lines, 12);
+    box_print(55, lines, 11);
 
     return 0;
 }
