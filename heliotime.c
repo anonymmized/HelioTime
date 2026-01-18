@@ -48,6 +48,11 @@ static void repeat(const char *s, int n) {
 static void box_print(int width, char *lines[], int nlines) {
     int inner = width - 2;
 
+    int w1 = 5;
+    int w2 = 13;
+    int w3 = 9;
+    int w4 = inner - (w1 + w2 + w3 + 3);
+
     printf("┌"); 
     repeat("─", inner); 
     printf("┐\n");
@@ -70,23 +75,55 @@ static void box_print(int width, char *lines[], int nlines) {
 
     printf("│");
     repeat(" ", left1);
-    printf(ESC "[1m%s" ESC "[0m", hdr);
+    printf("%s", hdr);
     repeat(" ", right1);
     printf("│\n");
 
     printf("│");
     repeat(" ", left2);
-    printf(ESC "[1m%s" ESC "[0m", tz);
+    printf("%s", tz);
     repeat(" ", right2);
     printf("│\n");
 
-    printf("├"); repeat("─", 5); printf("┐"); repeat("─", 13); printf("┐"); repeat("─", 9); printf("┐"); repeat("─", 23); printf("┤\n");
+    printf("├"); repeat("─", w1); printf("┬");
+    repeat("─", w2); printf("┬");
+    repeat("─", w3); printf("┬");
+    repeat("─", w4); printf("┤\n");
 
     for (int i = 2; i < nlines; i++) {
-        printf("│ %-*.*s │\n", inner - 2 + 6, inner - 2 + 6, lines[i]);
-    }
+        if (i == 3) {
+            printf("├"); repeat("─", w1); printf("┼");
+            repeat("─", w2); printf("┼");
+            repeat("─", w3); printf("┼");
+            repeat("─", w4); printf("┤\n");
+            continue;
+        }
+        char tmp[256];
+        strncpy(tmp, lines[i], sizeof(tmp) - 1);
+        char *c1 = strtok(tmp, "│");
+        char *c2 = strtok(NULL, "│");
+        char *c3 = strtok(NULL, "│");
+        char *c4 = strtok(NULL, "│");
 
-    printf("└"); repeat("─", inner); printf("┘\n");
+        if (!c1) c1 = "";
+        if (!c2) c2 = "";
+        if (!c3) c3 = "";
+        if (!c4) c4 = "";
+        
+        while (*c1 == ' ') c1++;
+        while (*c2 == ' ') c2++;
+        while (*c3 == ' ') c3++;
+        while (*c4 == ' ') c4++;
+        
+        printf("│ %-*.*s│ %-*.*s│ %-*.*s│ %-*.*s│\n", w1 - 1, w1 - 1, c1,
+                w2 - 1, w2 - 1, c2,
+                w3 - 1, w3 - 1, c3,
+                w4 - 1, w4 - 1, c4);
+    }
+    printf("└"); repeat("─", w1); printf("┴");
+    repeat("─", w2); printf("┴");
+    repeat("─", w3); printf("┴");
+    repeat("─", w4); printf("┘\n");
 }
 
 int get_weekday(int year, int day_num) {
@@ -358,7 +395,7 @@ int main(int argc, char *argv[]) {
         free(times);
     }
 
-    box_print(55, lines, 11);
+    box_print(61, lines, 11);
 
     return 0;
 }
