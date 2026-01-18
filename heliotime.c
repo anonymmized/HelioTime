@@ -11,11 +11,17 @@
 #include <errno.h>
 
 #define MAXLINE 256
-#define COLOR_RESET "\x1b[0m"
-#define COLOR_RED "\x1b[31m"
+
+#define BOLD   "\x1b[1m"
+#define DIM    "\x1b[2m"
+#define ITALIC "\x1b[3m" 
+#define UNDERL "\x1b[4m"
+#define ESC    "\x1b[0m"
+
+#define FG_YELLOW     "\x1b[33m"
+#define COLOR_RED     "\x1b[31m"
 #define COLOR_MAGENTA "\x1b[35m"
-#define COLOR_GRAY  "\033[90m"
-#define ESC "\x1b"
+#define COLOR_GRAY    "\033[90m"
 
 char home_path[MAXLINE];
 const char *names[] = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
@@ -42,7 +48,7 @@ static void repeat(const char *s, int n);
 static void box_print(int width, char *lines[], int nlines);
 
 static void repeat(const char *s, int n) {
-    for (int i = 0; i < n; i++) fputs(s, stdout);
+    for (int i = 0; i < n; i++) printf(COLOR_GRAY DIM "%s" ESC, s);
 }
 
 static void box_print(int width, char *lines[], int nlines) {
@@ -53,9 +59,9 @@ static void box_print(int width, char *lines[], int nlines) {
     int w3 = 9;
     int w4 = inner - (w1 + w2 + w3 + 3);
 
-    printf("┌"); 
+    printf(COLOR_GRAY DIM "┌" ESC); 
     repeat("─", inner); 
-    printf("┐\n");
+    printf(COLOR_GRAY DIM "┐\n" ESC);
 
     char hdr[256];
     char tz[256];
@@ -63,41 +69,42 @@ static void box_print(int width, char *lines[], int nlines) {
     snprintf(hdr, sizeof(hdr), " %s ", lines[0]);
     snprintf(tz, sizeof(tz), " %s ", lines[1]);
 
-    int pad1 = inner - (int)strlen(hdr);
+    int pad1 = inner - (int)strlen(hdr) + 2;
     if (pad1 < 0) pad1 = 0;
     int left1 = pad1 / 2;
     int right1 = pad1 - left1;
 
-    int pad2 = inner - (int)strlen(tz);
+    int pad2 = inner - (int)strlen(tz) + 2;
     if (pad2 < 0) pad2 = 0;
     int left2 = pad2 / 2;
     int right2 = pad2 - left2;
 
-    printf("│");
+    printf(COLOR_GRAY DIM "│" ESC);
     repeat(" ", left1);
-    printf("%s", hdr);
+    printf(BOLD "%s" ESC, hdr);
+
     repeat(" ", right1);
-    printf("│\n");
+    printf(COLOR_GRAY DIM "│\n" ESC);
 
-    printf("│");
+    printf(COLOR_GRAY DIM "│" ESC);
     repeat(" ", left2);
-    printf("%s", tz);
+    printf(DIM UNDERL "%s" ESC, tz);
     repeat(" ", right2);
-    printf("│\n");
+    printf(COLOR_GRAY DIM "│\n" ESC);
 
-    printf("├"); repeat("─", w1); printf("┬");
-    repeat("─", w2); printf("┬");
-    repeat("─", w3); printf("┬");
-    repeat("─", w4); printf("┤\n");
+    printf(COLOR_GRAY DIM "├" ESC); repeat("─", w1); printf(COLOR_GRAY DIM "┬" ESC);
+    repeat("─", w2); printf(COLOR_GRAY DIM "┬" ESC);
+    repeat("─", w3); printf(COLOR_GRAY DIM "┬" ESC);
+    repeat("─", w4); printf(COLOR_GRAY DIM "┤\n" ESC);
 
     for (int i = 2; i < nlines; i++) {
         if (i == 3) {
-            printf("├"); repeat("─", w1); printf("┼");
-            repeat("─", w2); printf("┼");
-            repeat("─", w3); printf("┼");
-            repeat("─", w4); printf("┤\n");
+            printf(COLOR_GRAY DIM "├" ESC); repeat("─", w1); printf(COLOR_GRAY DIM "┼" ESC);
+            repeat("─", w2); printf(COLOR_GRAY DIM "┼" ESC);
+            repeat("─", w3); printf(COLOR_GRAY DIM "┼" ESC);
+            repeat("─", w4); printf(COLOR_GRAY DIM "┤\n" ESC);
             continue;
-        }
+        } 
         char tmp[256];
         strncpy(tmp, lines[i], sizeof(tmp) - 1);
         char *c1 = strtok(tmp, "│");
@@ -114,16 +121,27 @@ static void box_print(int width, char *lines[], int nlines) {
         while (*c2 == ' ') c2++;
         while (*c3 == ' ') c3++;
         while (*c4 == ' ') c4++;
-        
-        printf("│ %-*.*s│ %-*.*s│ %-*.*s│ %-*.*s│\n", w1 - 1, w1 - 1, c1,
-                w2 - 1, w2 - 1, c2,
-                w3 - 1, w3 - 1, c3,
-                w4 - 1, w4 - 1, c4);
+        if (i == 2) {
+            printf(COLOR_GRAY DIM "│ " ESC DIM BOLD "%-*.*s" ESC COLOR_GRAY DIM "│ " ESC DIM BOLD "%-*.*s" ESC COLOR_GRAY DIM "│ " ESC DIM BOLD "%-*.*s" ESC COLOR_GRAY DIM "│ " ESC DIM BOLD "%-*.*s" ESC COLOR_GRAY DIM "│\n" ESC, w1 - 1, w1 - 1, c1,
+                    w2 - 1, w2 - 1, c2,
+                    w3 - 1, w3 - 1, c3,
+                    w4 - 1, w4 - 1, c4);
+        } else if (strstr(c4, "Current")){
+            printf(COLOR_GRAY DIM "│ " ESC COLOR_RED BOLD "%-*.*s" ESC COLOR_GRAY DIM "│ " ESC COLOR_RED BOLD "%-*.*s" ESC COLOR_GRAY DIM "│ " ESC COLOR_RED BOLD "%-*.*s" ESC COLOR_GRAY DIM "│ " ESC COLOR_RED BOLD "%-*.*s" ESC COLOR_GRAY DIM "│\n" ESC, w1 - 1, w1 - 1, c1,
+                    w2 - 1, w2 - 1, c2,
+                    w3 - 1, w3 - 1, c3,
+                    w4 - 1, w4 - 1, c4);
+        } else { 
+            printf(COLOR_GRAY DIM "│ " ESC "%-*.*s" COLOR_GRAY DIM "│ " ESC "%-*.*s" COLOR_GRAY DIM "│ " ESC "%-*.*s" COLOR_GRAY DIM "│ " ESC "%-*.*s" COLOR_GRAY DIM "│\n" ESC, w1 - 1, w1 - 1, c1,
+                    w2 - 1, w2 - 1, c2,
+                    w3 - 1, w3 - 1, c3,
+                    w4 - 1, w4 - 1, c4);
+        }
     }
-    printf("└"); repeat("─", w1); printf("┴");
-    repeat("─", w2); printf("┴");
-    repeat("─", w3); printf("┴");
-    repeat("─", w4); printf("┘\n");
+    printf(COLOR_GRAY DIM "└" ESC); repeat("─", w1); printf(COLOR_GRAY DIM "┴" ESC);
+    repeat("─", w2); printf(COLOR_GRAY DIM "┴" ESC);
+    repeat("─", w3); printf(COLOR_GRAY DIM "┴" ESC);
+    repeat("─", w4); printf(COLOR_GRAY DIM "┘\n" ESC);
 }
 
 int get_weekday(int year, int day_num) {
@@ -363,10 +381,10 @@ int main(int argc, char *argv[]) {
     char buf[12][256];
 
 
-    snprintf(buf[0], sizeof(buf[0]), "SUN REPORT (THIS WEEK)");
+    snprintf(buf[0], sizeof(buf[0]), "🌅 SUN REPORT (THIS WEEK)");
     lines[0] = buf[0];
 
-    snprintf(buf[1], sizeof(buf[1]), "Time Zone %d", tz_offset_mins);
+    snprintf(buf[1], sizeof(buf[1]), "🕒 Time Zone %d", tz_offset_mins);
     lines[1] = buf[1];
 
     snprintf(buf[2], sizeof(buf[2]), "Day │ Date        │ Sunrise │ Sunset");
