@@ -14,7 +14,7 @@
 
 #define BOLD   "\x1b[1m"
 #define DIM    "\x1b[2m"
-#define ITALIC "\x1b[3m" 
+#define ITALIC "\x1b[3m"
 #define UNDERL "\x1b[4m"
 #define ESC    "\x1b[0m"
 
@@ -126,7 +126,7 @@ static void box_print(int width, char *lines[], int nlines) {
                     w2 - 1, w2 - 1, c2,
                     w3 - 1, w3 - 1, c3,
                     w4 - 1, w4 - 1, c4);
-        } else if (strstr(c4, "Current")){
+        } else if (strstr(c4, "<<")){
             printf(COLOR_GRAY DIM "│ " ESC COLOR_RED BOLD "%-*.*s" ESC COLOR_GRAY DIM "│ " ESC COLOR_RED BOLD "%-*.*s" ESC COLOR_GRAY DIM "│ " ESC COLOR_RED BOLD "%-*.*s" ESC COLOR_GRAY DIM "│ " ESC COLOR_RED BOLD "%-*.*s" ESC COLOR_GRAY DIM "│\n" ESC, w1 - 1, w1 - 1, c1,
                     w2 - 1, w2 - 1, c2,
                     w3 - 1, w3 - 1, c3,
@@ -401,7 +401,7 @@ int main(int argc, char *argv[]) {
         int *times = get_sunrise_sunset(day_num, lat, lon, tz_offset_mins);
 
         if (w == w_conf) {
-            snprintf(buf[4 + i], sizeof(buf[4 + i]), "%-3s │ %02d.%02d.%04d  │ %02d:%02d   │ %02d:%02d  < Current",
+            snprintf(buf[4 + i], sizeof(buf[4 + i]), "%-3s │ %02d.%02d.%04d  │ %02d:%02d   │ %02d:%02d <<",
                     names[w], date[0], date[1], date[2], times[0], times[1], times[2], times[3]);
         } else {
             snprintf(buf[4 + i], sizeof(buf[4 + i]), "%-3s │ %02d.%02d.%04d  │ %02d:%02d   │ %02d:%02d", 
